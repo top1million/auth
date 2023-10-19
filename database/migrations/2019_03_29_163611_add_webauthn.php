@@ -1,24 +1,24 @@
 <?php
 
-use Illuminate\Database\ConnectionResolverInterface as Resolver;
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\MySqlConnection;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class() extends Migration
+class AddWebauthn extends Migration
 {
     /**
      * Run the migrations.
+     *
+     * @return void
      */
-    public function up(): void
+    public function up()
     {
         Schema::create('webauthn_keys', function (Blueprint $table) {
             $table->id();
             $table->bigInteger('user_id')->unsigned();
 
             $table->string('name')->default('key');
-            $table->mediumText('credentialId');
+            $table->string('credentialId', 255);
             $table->string('type', 255);
             $table->text('transports');
             $table->string('attestationType', 255);
@@ -29,20 +29,17 @@ return new class() extends Migration
             $table->timestamps();
 
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
-
-            if (app(Resolver::class)->connection($this->getConnection()) instanceof MySqlConnection) {
-                $table->index([app('db')->raw('credentialId(255)')], 'credential_index');
-            } else {
-                $table->index('credentialId');
-            }
+            $table->index('credentialId');
         });
     }
 
     /**
      * Reverse the migrations.
+     *
+     * @return void
      */
-    public function down(): void
+    public function down()
     {
         Schema::dropIfExists('webauthn_keys');
     }
-};
+}

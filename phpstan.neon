@@ -1,0 +1,20 @@
+includes:
+    - ./vendor/nunomaduro/larastan/extension.neon
+    - ./vendor/phpstan/phpstan-deprecation-rules/rules.neon
+    - ./vendor/phpstan/phpstan-strict-rules/rules.neon
+
+parameters:
+    paths:
+        - src
+    inferPrivatePropertyTypeFromConstructor: true
+    level: 5
+    ignoreErrors:
+        # Level 2
+        - '#Access to an undefined property LaravelWebauthn\\Models\\WebauthnKey::.*\.#'
+
+        - message: '#Variable property access on Illuminate\\Contracts\\Auth\\Authenticatable\.#'
+          paths:
+            - */Actions/AttemptToAuthenticate.php
+            - */Services/Webauthn/CreationOptionsFactory.php
+
+    excludes_analyse:

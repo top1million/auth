@@ -1,5 +1,7 @@
 <?php
 
+use LaravelWebauthn\Models\WebauthnKey;
+
 return [
 
     /*
@@ -37,18 +39,16 @@ return [
     |
     */
 
-    'model' => \App\Models\WebauthnKey::class,
-
     'username' => 'email',
 
     /*
     |--------------------------------------------------------------------------
-    | Fortify Routes Prefix / Subdomain
+    | Webauthn Routes Prefix / Subdomain
     |--------------------------------------------------------------------------
     |
-    | Here you may specify which prefix Fortify will assign to all the routes
+    | Here you may specify which prefix Webauthn will assign to all the routes
     | that it registers with the application. If necessary, you may change
-    | subdomain under which all of the Fortify routes will be available.
+    | subdomain under which all of the Webauthn routes will be available.
     |
     */
 
@@ -71,31 +71,28 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Webauthn key model
+    |--------------------------------------------------------------------------
+    |
+    | Here you may specify the model used to create Webauthn keys.
+    |
+    */
+
+    'model' => WebauthnKey::class,
+
+    /*
+    |--------------------------------------------------------------------------
     | Rate Limiting
     |--------------------------------------------------------------------------
     |
-    | By default, Webauthn will throttle logins to five requests per minute for
-    | every email and IP address combination. However, if you would like to
-    | specify a custom rate limiter to call then you may specify it here.
+    | By default, Laravel Webauthn will throttle logins to five requests per
+    | minute for every email and IP address combination. However, if you would
+    | like to specify a custom rate limiter to call then you may specify it here.
     |
     */
 
     'limiters' => [
-        'login' => 'login',
-    ],
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | Additional middleware to use on Webauthn key manage
-    |--------------------------------------------------------------------------
-    |
-    | .
-    |
-    */
-
-    'confirm' => [
-        'middleware' => null,
+        'login' => null,
     ],
 
     /*
@@ -112,8 +109,8 @@ return [
     */
 
     'redirects' => [
-        'login' => '/dashboard',
-        'register' => '/dashboard',
+        'login' => null,
+        'register' => null,
     ],
 
     /*
@@ -125,12 +122,28 @@ return [
     | - authenticate: when a user login, and has to validate Webauthn 2nd factor.
     | - register: when a user request to create a Webauthn key.
     |
+    | If the views are empty or null, then the route will not be registered.
+    |
     */
 
     'views' => [
         'authenticate' => 'webauthn::authenticate',
         'register' => 'webauthn::register',
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Webauthn logging
+    |--------------------------------------------------------------------------
+    |
+    | Here you may specify the channel to which Webauthn will log messages.
+    | This value should correspond with one of your loggers that is already
+    | present in your "logging" configuration file. If left as null, it will
+    | use the default logger for the application.
+    |
+    */
+
+    'log' => null,
 
     /*
     |--------------------------------------------------------------------------
@@ -141,7 +154,7 @@ return [
     |
     */
 
-    'sessionName' => 'webauthn_auth',
+    'session_name' => 'webauthn_auth',
 
     /*
     |--------------------------------------------------------------------------
@@ -229,7 +242,7 @@ return [
         \Cose\Algorithms::COSE_ALGORITHM_ES256, // ECDSA with SHA-256
         \Cose\Algorithms::COSE_ALGORITHM_ES512, // ECDSA with SHA-512
         \Cose\Algorithms::COSE_ALGORITHM_RS256, // RSASSA-PKCS1-v1_5 with SHA-256
-        \Cose\Algorithms::COSE_ALGORITHM_EdDSA, // EdDSA
+        \Cose\Algorithms::COSE_ALGORITHM_EDDSA, // EDDSA
         \Cose\Algorithms::COSE_ALGORITHM_ES384, // ECDSA with SHA-384
     ],
 

@@ -1,37 +1,32 @@
 <?php
 
-use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\Validate2faController;
-use Illuminate\Foundation\Application;
+use App\Http\Controllers\AuthenticationController;
+use App\Http\Controllers\RegistrationController;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
-
-/*
-|--------------------------------------------------------------------------
-| Web Routes
-|--------------------------------------------------------------------------
-|
-| Here is where you can register web routes for your application. These
-| routes are loaded by the RouteServiceProvider within a group which
-| contains the "web" middleware group. Now create something great!
-|
-*/
 
 Route::get('/', function () {
-    return Inertia::render('Welcome', [
-        'canLogin' => Route::has('login'),
-        'canRegister' => Route::has('register'),
-    ]);
+    if (Auth::check()) {
+        return view('authed', [
+            'user' => Auth::user(),
+        ]);
+    }
+
+    return view('home');
 });
 
-Route::middleware(['auth:sanctum', 'verified'])->group(function () {
-    Route::get('/validate2fa', [Validate2faController::class, 'show'])->name('validate2fa');
+Route::post('logout', function () {
+    Auth::logout();
+
+    return redirect('/');
 });
 
-Route::middleware([
-    'auth:sanctum',
-    config('jetstream.auth_session'),
-    'verified',
-])->group(function () {
-    Route::get('/dashboard', [DashboardController::class, 'show'])->name('dashboard');
+Route::prefix('registration')->controller(RegistrationController::class)->group(function () {
+    Route::post('/options', 'generateOptions');
+    Route::post('/verify', 'verify');
+});
+
+Route::prefix('authentication')->controller(AuthenticationController::class)->group(function () {
+    Route::post('/options', 'generateOptions');
+    Route::post('/verify', 'verify');
 });

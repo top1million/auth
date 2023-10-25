@@ -1,23 +1,95 @@
+import {
+    startAuthentication,
+    startRegistration,
+    browserSupportsWebAuthn,
+} from '@simplewebauthn/browser';
 import './bootstrap';
-import '../css/app.css';
 
-import { createApp, h } from 'vue';
-import { createInertiaApp } from '@inertiajs/vue3';
-import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
-import { ZiggyVue } from 'ziggy-js/dist/vue.m.js';
+document.addEventListener('alpine:init', () => {
+    Alpine.data('authForm', () => ({
+        mode: 'login',
+        username: '',
+        browserSupported: browserSupportsWebAuthn(),
+        error: null,
+        submit() {
+            this.error = null;
 
-const appName = window.document.getElementsByTagName('title')[0]?.innerText || 'Laravel';
+            if (this.mode === 'login') {
+                return this.submitLogin();
+            }
 
-createInertiaApp({
-    progress: {
-        color: '#4B5563',
-    },
-    title: (title) => `${title} - ${appName}`,
-    resolve: (name) => resolvePageComponent(`./Pages/${name}.vue`, import.meta.glob('./Pages/**/*.vue')),
-    setup({ el, App, props, plugin }) {
-        return createApp({ render: () => h(App, props) })
-            .use(plugin)
-            .use(ZiggyVue, Ziggy)
-            .mount(el);
-    },
+            return this.submitRegister();
+        },
+        submitRegister() {
+            this.trackEvent('D5MKGI4J');
+
+            window.axios
+                // Ask for the registration options
+                .post('/registration/options', {
+                    username: this.username,
+                })
+                // Prompt the user to create a passkey
+                .then((response) => startRegistration(response.data))
+                // Verify the data with the server
+                .then((attResp) => axios.post('/registration/verify', attResp))
+                .then((verificationResponse) => {
+                    if (verificationResponse.data?.verified) {
+                        // If we're good, reload the page and
+                        // the server will redirect us to the dashboard
+                        this.trackEvent('ME74WQE4');
+                        return window.location.reload();
+                    }
+
+                    this.error =
+                        'Something went wrong verifying the registration.';
+                })
+                .catch((error) => {
+                    this.error = error?.response?.data?.message || error;
+                });
+        },
+        submitLogin() {
+            this.trackEvent('OHHWLXDF');
+
+            window.axios
+                // Ask for the authentication options
+                .post('/authentication/options', {
+                    username: this.username,
+                })
+                // Prompt the user to authenticate with their passkey
+                .then((response) => startAuthentication(response.data))
+                // Verify the data with the server
+                .then((attResp) =>
+                    axios.post('/authentication/verify', attResp),
+                )
+                .then((verificationResponse) => {
+                    // If we're good, reload the page and
+                    // the server will redirect us to the dashboard
+                    if (verificationResponse.data?.verified) {
+                        this.trackEvent('D7T81ZST');
+                        return window.location.reload();
+                    }
+
+                    this.error =
+                        'Something went wrong verifying the authentication.';
+                })
+                .catch((error) => {
+                    const errorMessage =
+                        error?.response?.data?.message || error;
+
+                    if (errorMessage === 'User not found') {
+                        this.mode = 'confirmRegistration';
+                        return;
+                    }
+
+                    this.error = error?.response?.data?.message || error;
+                });
+        },
+        trackEvent(eventId) {
+            if (typeof fathom === 'undefined') {
+                return;
+            }
+
+            fathom.trackGoal(eventId, 0);
+        },
+    }));
 });
